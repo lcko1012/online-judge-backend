@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require("express")
 const bodyParser = require("body-parser")
 const cors = require("cors")
+const cookieParser = require("cookie-parser")
 
 const app = express()
 
@@ -11,6 +12,7 @@ var corsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.use(cookieParser())
 
 app.use(express.json())
 
@@ -18,11 +20,11 @@ app.use(express.urlencoded({extended: true}))
 
 const db = require("./models")
 
-db.sequelize.sync({ force: true }).then(() => {
-    console.log("Drop and re-sync db.");
-});
+// db.sequelize.sync({ force: true }).then(() => {
+//     console.log("Drop and re-sync db.");
+// });
 
-// db.sequelize.sync();
+db.sequelize.sync();
 
 app.get("/", (req, res) => {
     res.json({message: "Hello world"})
