@@ -4,6 +4,7 @@ module.exports = (app) => {
 
     router.post("/login", authController.login)
     router.post("/register", authController.register)
+    router.post("/activation", authController.activateEmail)
     
     app.use("/api/auth", router)
 }
