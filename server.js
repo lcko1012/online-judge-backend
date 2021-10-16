@@ -4,6 +4,8 @@ const express = require("express")
 const bodyParser = require("body-parser")
 const cors = require("cors")
 const fileUpload = require("express-fileupload")
+const cookieParser = require("cookie-parser")
+
 const app = express()
 
 var corsOptions = {
@@ -11,6 +13,7 @@ var corsOptions = {
 }
 
 app.use(cors(corsOptions))
+app.use(cookieParser())
 
 app.use(express.json())
 
