@@ -63,7 +63,7 @@ exports.register = async (req, res) => {
         })
     }
     catch (err) {
-        return res.status(500).send({ msg: err.message })
+        return res.status(500).send({ message: err.message })
     }
 }
 
@@ -88,7 +88,7 @@ exports.activateEmail = async (req, res) => {
         res.send({message: "Account has been activated"})
 
     } catch (err) {
-        return res.status(500).send({ msg: err.message })
+        return res.status(500).send({ message: err.message })
     }
 }
 

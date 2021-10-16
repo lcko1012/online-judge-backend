@@ -32,7 +32,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         avatarUrl: {
             type: Sequelize.STRING,
-            defaultValue: "https://windows79.com/wp-content/uploads/2021/02/Thay-the-hinh-dai-dien-tai-khoan-nguoi-dung-mac.png"
+            defaultValue: "https://res.cloudinary.com/dgp6k8yir/image/upload/v1634363145/avatar/t0attjkzsrf7uod8x06i.png"
         }
     })
 
