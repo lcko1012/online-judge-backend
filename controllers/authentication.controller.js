@@ -160,3 +160,12 @@ const createAccessToken = (payload) => {
 const createRefreshToken = (payload) => {
     return jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {expiresIn: '7d'})
 }
+
+const createActivationToken = (payload) => {
+    return jwt.sign(payload, process.env.ACTIVATION_TOKEN_SECRET, { expiresIn: '1d' })
+}
+
+function validateEmail(email) {
+    const re = /^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(email);
+}

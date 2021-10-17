@@ -21,7 +21,7 @@ exports.updatePassword = async (req, res) => {
     try {
         const {oldPassword, password, matchedPassword} = req.body
         if(!oldPassword || !password || !matchedPassword) return res.status(400).send({
-            message : "Please fill all fields"
+            message : "Please fill in all fields"
         })
 
         if(password.length < 6 || password.length > 32) return res.status(400).send({
@@ -61,7 +61,7 @@ exports.updateInformation = async (req, res) => {
         const username = req.user.username
         const {email, firstName, lastName} = req.body
         if(!email) return res.status(400).send({
-            message : "Please fill email field"
+            message : "Please fill in email field"
         })
 
         //Check if email is exist
@@ -102,7 +102,7 @@ exports.updateAvatar = async (req, res) => {
         const {avatarUrl} = req.body
 
         if(!avatarUrl) return res.status(400).send({
-            message : "Please fill avatar field"
+            message : "Please fill in avatar field"
         })
 
         await User.update({
