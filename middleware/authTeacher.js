@@ -5,11 +5,12 @@ const roleType = require("../utils/roleType")
 const authAdmin = async (req, res, next) => {
     try {
         const user = await User.findByPk(req.user.username)
-        if(user.role === roleType.ADMIN) {
+        console.log(user)
+        if(user.role === roleType.TEACHER || user.role === roleType.ADMIN) {
             next()
         }
         else {
-            return res.status(403).send({ message: "Admin resources access denied." })
+            return res.status(403).send({ message: "Teacher resources access denied." })
         }
     } catch (error) {
         return res.status(500).send({ message: err.message })

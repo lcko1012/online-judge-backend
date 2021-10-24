@@ -38,6 +38,7 @@ app.get("/", (req, res) => {
 require("./routes/authentication.routes")(app)
 require("./routes/user.routes")(app)
 require("./routes/uploadImage.routes")(app)
+require("./routes/post.routes")(app)
 
 const PORT = process.env.PORT || 8080
 

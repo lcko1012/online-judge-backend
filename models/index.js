@@ -21,6 +21,7 @@ db.Sequelize = Sequelize
 db.sequelize = sequelize
 
 db.user = require("./user.model")(sequelize, Sequelize)
+db.post = require("./post.model")(sequelize, Sequelize)
 
 Object.keys(db).forEach(key => {
     if('associate' in db[key]) {

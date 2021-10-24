@@ -36,6 +36,12 @@ module.exports = (sequelize, Sequelize) => {
         }
     })
 
+    User.associate = db => {
+        User.hasMany(db.post, {
+            as: "post"
+        })
+    }
+
     return User
 }
 
