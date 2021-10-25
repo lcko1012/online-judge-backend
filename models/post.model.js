@@ -6,8 +6,8 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false
         },
         content: {
-            type: Sequelize.STRING,
-            allowNull: false
+            type: Sequelize.TEXT,
+            allowNull: false,
         },
         visibleMode: {
             type: Sequelize.STRING,
@@ -18,7 +18,7 @@ module.exports = (sequelize, Sequelize) => {
     Post.associate = db => {
         Post.belongsTo(db.user, {
             foreignKey: "author",
-            constraints: false
+            targetKey: "username"
         })
     }
 
