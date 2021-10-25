@@ -4,9 +4,8 @@ const Op = db.Sequelize.Op
 
 exports.findAllByAdmin = async (req, res) => {
     try {
-        res.send({
-            message: "get all posts by admin"
-        })
+        const posts = await Post.findAll()
+        res.send(posts)
     } catch (error) {
         return res.status(500).send({ message: err.message })
     }
@@ -14,9 +13,16 @@ exports.findAllByAdmin = async (req, res) => {
 
 exports.findAllByTeacher = async (req, res) => {
     try {
-        res.send({
-            message: "get public posts and my own by teacher"
+        const posts = await Post.findAll({
+            where: {
+                [Op.or]: [
+                    {visibleMode: "public"},
+                    {author: req.user.username}
+                ]
+            }
         })
+
+        res.send(posts)
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -25,9 +31,13 @@ exports.findAllByTeacher = async (req, res) => {
 
 exports.findAllByUser = async (req, res) => {
     try {
-        res.send({
-            message: "get public post by user"
+        const posts = await Post.findAll({
+            where: {
+                visibleMode: "public"
+            }
         })
+
+        res.send(posts)
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -37,9 +47,9 @@ exports.findAllByUser = async (req, res) => {
 
 exports.findOneByAdmin = async (req, res) => {
     try {
-        res.send({
-            message: "get one post"
-        })
+        const post = await Post.findByPk(req.params.id)
+        
+        res.send(post)
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -48,9 +58,13 @@ exports.findOneByAdmin = async (req, res) => {
 
 exports.findOneByTeacher = async (req, res) => {
     try {
-        res.send({
-            message: "get one public, teacher's post"
-        })
+        const post = await Post.findByPk(req.params.id)
+        
+        if(post.visibleMode !== "public" && post.author !== req.user.username){
+            return res.status(400).send({ message: "Do not have permission" })
+        }
+
+        res.send(post)
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -60,9 +74,13 @@ exports.findOneByTeacher = async (req, res) => {
 
 exports.findOneByUser = async (req, res) => {
     try {
-        res.send({
-            message: "get one public post"
-        })
+        const post = await Post.findByPk(req.params.id)
+        
+        if(post.visibleMode !== "public"){
+            return res.status(400).send({ message: "Do not have permission" })
+        }
+
+        res.send(post)
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -72,8 +90,27 @@ exports.findOneByUser = async (req, res) => {
 
 exports.updateOneByAdmin = async (req, res) => {
     try {
+        const {title, content, visibleMode} = req.body
+
+        if(!title || !content || !visibleMode) {
+            return res.status(400).send({ message: "Please fill in all fields" })
+        }
+
+        console.log(title)
+        
+        await Post.update({
+            title,
+            content,
+            visibleMode
+        },
+        {
+            where: {
+                id: req.params.id
+            }
+        })
+        
         res.send({
-            message: "update post"
+            message: "Update success!"
         })
         
     } catch (error) {
@@ -84,8 +121,31 @@ exports.updateOneByAdmin = async (req, res) => {
 
 exports.updateOneByTeacher = async (req, res) => {
     try {
+        const {id} = req.params
+        const {title, content, visibleMode} = req.body
+
+        if(!title || !content || !visibleMode) {
+            return res.status(400).send({ message: "Please fill in all fields" })
+        }
+
+        const post = await Post.findByPk(id)
+        
+        if(post.author !== req.user.username) {
+            return res.status(400).send({ message: "Do not have permission" })
+        }
+        await Post.update({
+            title,
+            content,
+            visibleMode
+        },
+        {
+            where: {
+                id: id
+            }
+        })
+
         res.send({
-            message: "just update teacher's post "
+            message: "Update success!"
         })
         
     } catch (error) {
@@ -93,33 +153,23 @@ exports.updateOneByTeacher = async (req, res) => {
     }
 }
 
-exports.updateOneByTeacher = async (req, res) => {
-    try {
-        res.send({
-            message: "just update teacher's post "
-        })
-        
-    } catch (error) {
-        return res.status(500).send({ message: err.message })
-    }
-}
-
-exports.updateOneByTeacher = async (req, res) => {
-    try {
-        res.send({
-            message: "just update teacher's post "
-        })
-        
-    } catch (error) {
-        return res.status(500).send({ message: err.message })
-    }
-}
 
 exports.createPost = async (req, res) => {
     try {
-        res.send({
-            message: "create new post"
+        const {title, content, visibleMode} = req.body
+        console.log(content)
+        if(!title || !content || !visibleMode) {
+            return res.status(400).send({ message: "Please fill in all fields" })
+        }
+
+        await Post.create({
+            title,
+            content,
+            visibleMode,
+            author: req.user.username
         })
+
+        res.send({message: "Create success!"})
         
     } catch (error) {
         return res.status(500).send({ message: err.message })
@@ -128,10 +178,19 @@ exports.createPost = async (req, res) => {
 
 exports.deletePostByTeacher = async (req, res) => {
     try {
-        res.send({
-            message: "only delete their post"
-        })
+        const {id} = req.params
+        const post = await Post.findByPk(id)
         
+        if(post.author !== req.user.username) {
+            return res.status(400).send({ message: "Do not have permission" })
+        }
+
+        await Post.destroy({
+            where: {id}
+        })
+        res.send({
+            message: "Delete success!"
+        })
     } catch (error) {
         return res.status(500).send({ message: err.message })
     }
@@ -139,10 +198,44 @@ exports.deletePostByTeacher = async (req, res) => {
 
 exports.deletePostByAdmin = async (req, res) => {
     try {
-        res.send({
-            message: "delete"
+        await Post.destroy({
+            where: {
+                id: req.params.id
+            }
         })
-        
+        res.send({
+            message: "Delete success!"
+        })
+    } catch (error) {
+        return res.status(500).send({ message: err.message })
+    }
+}
+
+exports.searchPosts = async (req, res) => {
+    try {
+        if(!req.body.searchText) {
+            return res.status(400).send({ message: "Please fill in field" })
+        }
+
+        const posts = await Post.findAll({
+            where: {
+                [Op.or]: [
+                    {
+                        author: {
+                            [Op.iLike]: `%${req.body.searchText.toLowerCase()}%`
+                        },
+                       
+                    },
+                    {
+                        content: {
+                            [Op.iLike]: `%${req.body.searchText.toLowerCase()}%`
+                        }
+                    }
+                ]
+                
+            }
+        })
+        res.send(posts)
     } catch (error) {
         return res.status(500).send({ message: err.message })
     }

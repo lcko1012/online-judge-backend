@@ -5,8 +5,9 @@ module.exports = (app) => {
     const authAdmin = require("../middleware/authAdmin")
     const authTeacher = require("../middleware/authTeacher")
 
-    //Get current user
+    //Create new post by admin and teacher
     router.post("/", auth, authTeacher, postController.createPost)
+    router.post("/search_title", auth, authTeacher, postController.searchPosts)
 
     router.get("/admin", auth, authAdmin , postController.findAllByAdmin)
     router.get("/admin/:id", auth, authAdmin, postController.findOneByAdmin)
@@ -19,8 +20,8 @@ module.exports = (app) => {
     router.delete("/teacher/:id", auth, authTeacher, postController.deletePostByTeacher)
 
 
-    router.get("/user", auth, postController.findAllByUser)
-    router.get("/user/:id", auth, postController.findOneByUser)
+    router.get("/user", postController.findAllByUser)
+    router.get("/user/:id", postController.findOneByUser)
 
 
     app.use("/api/post", router)

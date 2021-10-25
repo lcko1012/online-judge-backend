@@ -5,7 +5,6 @@ const roleType = require("../utils/roleType")
 const authAdmin = async (req, res, next) => {
     try {
         const user = await User.findByPk(req.user.username)
-        console.log(user)
         if(user.role === roleType.TEACHER || user.role === roleType.ADMIN) {
             next()
         }
