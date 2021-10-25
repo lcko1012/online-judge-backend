@@ -22,16 +22,8 @@ exports.register = async (req, res) => {
             })
         }
 
-        if (password.length < 6) {
-            return res.status(400).send({
-                message: "Password must be at least 6 characters"
-            })
-        }
-
-        if (password.length > 32) {
-            return res.status(400).send({
-                message: "Password must be less than 32 characters"
-            })
+        if(password < 6 || password > 32) {
+            return res.status(400).send({message: "Password is greater than 6 and less than 32 characters"})
         }
 
         if (password !== matchedPassword) {
@@ -146,6 +138,59 @@ exports.logout = async (req, res) => {
     try {
         res.clearCookie('refreshToken', {path: '/api/auth/refresh_token'})
         return res.send({message: "Logged out"})
+    } catch (err) {
+        return res.status(500).send({message: err.message}) 
+
+    }
+}
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const {email} = req.body
+        if(!email) return res.status(400).send({message: "Please fill in field"})
+        const user = await User.findOne({
+            where: {email}
+        })
+
+        if(!user) return res.status(400).send({message: "This email does not exist"})
+
+        const access_token = createAccessToken({username: user.username})
+        const url = `${CLIENT_URL}/reset_password/${access_token}`
+
+        sendEmail(email, url, "Reset your password")
+        res.send({message: "Re-send the password, please check your email"})
+
+    } catch (err) {
+        return res.status(500).send({message: err.message}) 
+
+    }
+}
+
+exports.resetPassword = async (req, res) => {
+    try {
+        const {password, matchedPassword} = req.body
+        if(!password && !matchedPassword) {
+            return res.status(400).send({message: "Please fill in all fields"})
+        }
+
+        if(password.length < 6 || password.length > 32) {
+            return res.status(400).send({message: "Password is greater than 6 and less than 32 characters"})
+        }
+
+        if (password !== matchedPassword) {
+            return res.status(400).send({
+                message: "Passwords do not match"
+            })
+        }
+
+        const passwordHash = await bcrypt.hash(password, 12)
+
+        await User.update({
+            password: passwordHash}, {
+            where: {username: req.user.username}
+        })
+
+        res.send({message: "Password successfully changed"})
     } catch (err) {
         return res.status(500).send({message: err.message}) 
 
