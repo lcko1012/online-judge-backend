@@ -147,6 +147,7 @@ exports.logout = async (req, res) => {
 exports.forgotPassword = async (req, res) => {
     try {
         const {email} = req.body
+        if(!email) return res.status(400).send({message: "Please fill in field"})
         const user = await User.findOne({
             where: {email}
         })
