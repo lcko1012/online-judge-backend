@@ -22,7 +22,7 @@ exports.register = async (req, res) => {
             })
         }
 
-        if(password < 6 || password > 32) {
+        if(password.length < 6 || password.length > 32) {
             return res.status(400).send({message: "Password is greater than 6 and less than 32 characters"})
         }
 
