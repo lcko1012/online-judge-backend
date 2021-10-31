@@ -7,15 +7,14 @@ module.exports = (app) => {
 
     router.get("/", auth, authTeacher, groupController.findAll)
     router.post("/", auth, authTeacher, groupController.createGroup)
-
+    router.get("/:id/get_users", auth, authTeacher, groupController.findAllUsersInGroup)
     router.get("/:id", auth, authTeacher, groupController.findOne)
 
+    router.post("/admin/add_user", auth, authAdmin, groupController.addUserToGroupByAdmin)
     router.put("/admin/:id", auth, authAdmin, groupController.updateOneByAdmin)
     router.put("/teacher/:id", auth, authTeacher, groupController.updateOneByTeacher)
     router.delete("/admin/:id", auth, authAdmin, groupController.deleteGroupByAdmin)
     router.delete("/teacher/:id", auth, authTeacher, groupController.deleteGroupByTeacher)
-
-    router.post("/search", auth, authTeacher, groupController.searchGroup)
 
     app.use("/api/group", router)
 }

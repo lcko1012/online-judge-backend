@@ -7,6 +7,13 @@ module.exports = (sequelize, Sequelize) => {
         },
         description: {
             type: Sequelize.TEXT
+        },
+        
+        //false: haven't delete
+        //true: deleted
+        delFlag: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         }
     })
 
