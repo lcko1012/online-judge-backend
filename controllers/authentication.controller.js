@@ -32,10 +32,11 @@ exports.register = async (req, res) => {
             })
         }
 
+
         const checkUsername = await User.findByPk(username)
         if (checkUsername) return res.status(400).send({ message: "This username already exists" })
 
-        const checkEmail = await User.findOne({ where: { email: email } })
+        const checkEmail = await User.findOne({ where: { email: email }})
         if (checkEmail) return res.status(400).send({ message: "This email already exists" })
 
 
@@ -49,6 +50,8 @@ exports.register = async (req, res) => {
         const url = `${CLIENT_URL}/user/activate/${activationToken}`
 
         sendEmail(email, url, "Verify your email address")
+
+        await User.create(newUser)
 
         res.send({
             message: "Register Success! Please activate your email to start"
@@ -65,17 +68,17 @@ exports.activateEmail = async (req, res) => {
         const user = jwt.verify(activationToken, process.env.ACTIVATION_TOKEN_SECRET)
 
         const {username, email, password} = user
-        const checkUsername = await User.findByPk(username)
-        if (checkUsername) return res.status(400).send({ message: "This username already exists" })
+        const existedUser = await User.findOne({
+            where: { username, email, password }
+        })
+        
+        if(!existedUser) return res.status(400).send({ message: "This user does not exists" })
 
-        const checkEmail = await User.findOne({ where: { email: email } })
-        if (checkEmail) return res.status(400).send({ message: "This email already exists" })
-
-        const newUser = {
-            username, password, email
-        }
-
-        await User.create(newUser)
+        await User.update({
+            isEnable: true,
+        }, {
+            where: {username}
+        })
 
         res.send({message: "Account has been activated"})
 
@@ -94,6 +97,10 @@ exports.login = async (req, res) => {
         const user = await User.findByPk(username)
         if(!user) return res.status(400).send({
             message: "Invalid username or password"
+        })
+
+        if(user.isEnable === false) return res.status(400).send({
+            message: "This account is not activated yet"
         })
 
         const isMatch = await bcrypt.compare(password, user.password)
@@ -146,13 +153,13 @@ exports.logout = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
     try {
-        const {email} = req.body
-        if(!email) return res.status(400).send({message: "Please fill in field"})
+        const {email, username} = req.body
+        if(!email || !username) return res.status(400).send({message: "Please fill in all fields"})
         const user = await User.findOne({
-            where: {email}
+            where: {email, username}
         })
 
-        if(!user) return res.status(400).send({message: "This email does not exist"})
+        if(!user) return res.status(400).send({message: "This user does not exist"})
 
         const access_token = createAccessToken({username: user.username})
         const url = `${CLIENT_URL}/reset_password/${access_token}`
@@ -207,7 +214,7 @@ const createRefreshToken = (payload) => {
 }
 
 const createActivationToken = (payload) => {
-    return jwt.sign(payload, process.env.ACTIVATION_TOKEN_SECRET, { expiresIn: '1d' })
+    return jwt.sign(payload, process.env.ACTIVATION_TOKEN_SECRET, { expiresIn: '365d'})
 }
 
 function validateEmail(email) {
