@@ -33,6 +33,11 @@ module.exports = (sequelize, Sequelize) => {
         avatarUrl: {
             type: Sequelize.STRING,
             defaultValue: "https://res.cloudinary.com/dgp6k8yir/image/upload/v1634363145/avatar/t0attjkzsrf7uod8x06i.png"
+        },
+        //Da kich hoat tai khoan hay chua?
+        isEnable: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         }
     })
 

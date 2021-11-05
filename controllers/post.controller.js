@@ -31,10 +31,15 @@ exports.findAllByTeacher = async (req, res) => {
 
 exports.findAllByUser = async (req, res) => {
     try {
+        //get 20 posts recently
         const posts = await Post.findAll({
             where: {
                 visibleMode: "public"
-            }
+            },
+            limit: 20,
+            order: [
+                ['createdAt', 'DESC']
+            ]
         })
 
         res.send(posts)
