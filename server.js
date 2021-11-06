@@ -40,6 +40,7 @@ require("./routes/user.routes")(app)
 require("./routes/uploadImage.routes")(app)
 require("./routes/post.routes")(app)
 require("./routes/group.routes")(app)
+require("./routes/problem.routes")(app)
 
 const PORT = process.env.PORT || 8080
 

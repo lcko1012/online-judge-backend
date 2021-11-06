@@ -24,6 +24,8 @@ db.user = require("./user.model")(sequelize, Sequelize)
 db.post = require("./post.model")(sequelize, Sequelize)
 db.group_user = require("./group_user.model")(sequelize, Sequelize)
 db.group = require("./group.model")(sequelize, Sequelize)
+db.problem = require("./problem.model")(sequelize, Sequelize)
+db.problemTag = require("./problemTag.model")(sequelize, Sequelize)
 
 Object.keys(db).forEach(key => {
     if('associate' in db[key]) {
