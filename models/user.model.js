@@ -47,6 +47,11 @@ module.exports = (sequelize, Sequelize) => {
             sourceKey: "username"
         }),
 
+        User.hasMany(db.problem, {
+            foreignKey: "author",
+            sourceKey: "username"
+        }),
+
         User.belongsToMany(db.group, {
             through: db.group_user,
             foreignKey: "username",
