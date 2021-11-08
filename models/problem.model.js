@@ -6,13 +6,13 @@ module.exports = (sequelize, Sequelize) => {
             allowNull: false
         },
         statement: {
-            type: Sequelize.STRING,
+            type: Sequelize.TEXT,
             allowNull: false
         },
         timeLimit: {
             type: Sequelize.INTEGER,
             //ms
-            defaultValue: 1000
+            defaultValue: 1
         },
         memoryLimit: {
             type: Sequelize.INTEGER,
@@ -24,6 +24,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         visibleMode: {
             type: Sequelize.STRING,
+            defaultValue: 'public'
         },
         totalAttempt: {
             type: Sequelize.INTEGER
@@ -32,7 +33,7 @@ module.exports = (sequelize, Sequelize) => {
             type: Sequelize.INTEGER
         },
         difficulty: {
-            type: Sequelize.INTEGER
+            type: Sequelize.STRING
         },
         delFlag: {
             type: Sequelize.BOOLEAN,

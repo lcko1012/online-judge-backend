@@ -4,7 +4,18 @@ module.exports = (app) => {
     const uploadImage = require("../middleware/uploadImage")
     const auth = require("../middleware/auth")
 
-    router.post("/upload_image", auth , uploadImage, uploadImageController.uploadImage)
+    const multer  = require('multer')
+    var storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, './static/avatar')
+        },
+        filename: function (req, file, cb) {
+            cb(null, file.fieldname + '-' + Date.now())
+      }
+    })
+    var upload = multer({ storage: storage })
+
+    router.post("/upload_image", auth , upload.single('file'), uploadImage, uploadImageController.uploadImage)
 
     app.use("/api", router)
 }

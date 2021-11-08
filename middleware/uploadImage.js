@@ -2,20 +2,18 @@ const fs = require("fs")
 
 module.exports = async function(req, res, next){
     try {
-        console.log(req.files)
-        if(!req.files || Object.keys(req.files).length === 0){
+        if(!req.file || Object.keys(req.file).length === 0){
             return res.status(400).json({message: "No files were uploaded."})
         }
         
-        const file = req.files.file
-        console.log(file)
-        if(file.size > 1024*1024){
-            removeTmp(file.tempFilePath)
+        const file = req.file
+        if(file.size > 1024*1024*2){
+            removeTmp(file.path)
             return res.status(400).json({message: "Size too large"})
-        } // 1mb
+        } // 2mb
 
         if(file.mimetype !== 'image/jpeg' && file.mimetype !== 'image/png'){
-            removeTmp(file.tempFilePath)
+            removeTmp(file.path)
             return res.status(400).json({message: "File format is incorrect"})
         }
         next()
