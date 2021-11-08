@@ -3,14 +3,18 @@ require('dotenv').config()
 const express = require("express")
 const bodyParser = require("body-parser")
 const cors = require("cors")
-const fileUpload = require("express-fileupload")
+// const fileUpload = require("express-fileupload")
 const cookieParser = require("cookie-parser")
+
 
 const app = express()
 
 var corsOptions = {
     origin: "http://localhost:3000"
 }
+app.use(express.static('public'));
+
+app.use('/zip_files',express.static(__dirname));
 
 app.use(cors(corsOptions))
 app.use(cookieParser())
@@ -19,9 +23,9 @@ app.use(express.json())
 
 app.use(express.urlencoded({extended: true}))
 
-app.use(fileUpload({
-    useTempFiles: true
-}))
+// app.use(fileUpload({
+//     useTempFiles: true
+// }))
 
 const db = require("./models")
 
@@ -41,6 +45,7 @@ require("./routes/uploadImage.routes")(app)
 require("./routes/post.routes")(app)
 require("./routes/group.routes")(app)
 require("./routes/problem.routes")(app)
+require("./routes/problemTag.routes")(app)
 
 const PORT = process.env.PORT || 8080
 

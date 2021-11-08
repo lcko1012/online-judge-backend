@@ -4,21 +4,36 @@ module.exports = (app) => {
     const auth = require("../middleware/auth")
     const authAdmin = require("../middleware/authAdmin")
     const authTeacher = require("../middleware/authTeacher")
+    var path = require('path')
+    const multer  = require('multer')
+    var storage = multer.diskStorage({
+        destination: function (req, file, cb) {
+            cb(null, './static/zipFiles')
+        },
+        filename: function (req, file, cb) {
+            cb(null, file.originalname.replace(".zip", "") + '-' + Date.now()  + path.extname(file.originalname))
+      }
+    })
+    
+    var upload = multer({ storage: storage })
+
+    // Validate zip file
+    router.post("/validate_zip", auth, upload.single('zipFile'), problemController.validateZip)
 
     //Find all
     router.get("/admin", auth, authAdmin, problemController.findAllByAdmin)
     router.get("/teacher", auth, authTeacher, problemController.findAllByTeacher)
 
     //Create
-    router.post("/", auth, authTeacher, problemController.createProblem)
+    router.post("/", auth, upload.single('testDataURL'), authTeacher, problemController.createProblem)
 
     //Find one
     router.get("/admin/:id", auth, authAdmin, problemController.findOneByAdmin)
     router.get("/teacher/:id", auth, authTeacher, problemController.findOneByTeacher)
 
     //Update one
-    router.put("/admin/:id", auth, authAdmin, problemController.updateOneByAdmin)
-    router.put("/teacher/:id", auth, authTeacher, problemController.updateOneByTeacher)
+    router.patch("/admin/:id", auth, authAdmin, upload.single('testDataURL'),problemController.updateOneByAdmin)
+    router.patch("/teacher/:id", auth, authTeacher,upload.single('testDataURL'), problemController.updateOneByTeacher)
 
     
     router.delete("/admin/:id", auth, authAdmin, problemController.deleteByAdmin)

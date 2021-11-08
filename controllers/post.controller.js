@@ -64,7 +64,9 @@ exports.findOneByAdmin = async (req, res) => {
 exports.findOneByTeacher = async (req, res) => {
     try {
         const post = await Post.findByPk(req.params.id)
-        
+
+        if (!post) return res.status(404).send({ message: "Post not found" })
+
         if(post.visibleMode !== "public" && post.author !== req.user.username){
             return res.status(400).send({ message: "Do not have permission" })
         }

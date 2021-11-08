@@ -10,13 +10,14 @@ cloudinary.config({
 
 exports.uploadImage = (req, res) => {
     try {
-        const file = req.files.file
-        cloudinary.v2.uploader.upload(file.tempFilePath, {
+        console.log(req)
+        const file = req.file
+        cloudinary.v2.uploader.upload(file.path, {
             folder: 'avatar'
         }, async (err, result) => {
             if (err) throw err
 
-            removeTmp(file.tempFilePath)
+            removeTmp(file.path)
 
             res.send({ url: result.secure_url })
         })
