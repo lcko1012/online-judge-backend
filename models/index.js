@@ -15,6 +15,21 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     }
 })
 
+// Define server connection
+// const sequelize = new Sequelize(dbConfig.DB ,{
+//     dialect: dbConfig.dialect,
+//     dialectOptions: dbConfig.dialectOptions,
+// })
+
+// sequelize
+//   .authenticate()
+//   .then(() => {
+//     console.log('Connection has been established successfully.');
+//   })
+//   .catch(err => {
+//     console.error('Unable to connect to the database:', err);
+// });
+
 const db = {}
 
 db.Sequelize = Sequelize
