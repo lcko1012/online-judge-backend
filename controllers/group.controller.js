@@ -153,7 +153,7 @@ exports.updateOneByTeacher = async (req, res) => {
     try {
         const { id } = req.params
         const { name, description } = req.body
-
+        console.log(req.user)
         if (!name) {
             return res.status(400).send({ message: "Please fill in name field" })
         }
@@ -208,7 +208,7 @@ exports.deleteGroupByAdmin = async (req, res) => {
 
         await Group.update({
             delFlag: true
-        },
+            },
             {
                 where: {
                     id
@@ -229,7 +229,10 @@ exports.deleteGroupByTeacher = async (req, res) => {
 
         const group = await Group.findOne(
             {
-                where: { id },
+                where: { 
+                    id,
+                    delFlag: false
+                },
                 include: [{
                     model: User,
                     attributes: ['username'],
@@ -245,7 +248,7 @@ exports.deleteGroupByTeacher = async (req, res) => {
         )
 
         if (!group) {
-            return res.status(400).send({ message: "Do not have permission" })
+            return res.status(400).send({ message: "Group does not exist" })
         }
 
         if (group.users[0].username !== req.user.username) {

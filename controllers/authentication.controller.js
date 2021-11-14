@@ -109,11 +109,12 @@ exports.login = async (req, res) => {
         })
 
         const refreshToken = createRefreshToken({username: user.username})
-
+        console.log(process.env.NODE_ENV === 'production')
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             path: '/api/auth/refresh_token',
-            maxAge: 7*24*60*60*1000
+            maxAge: 7*24*60*60*1000,
+            secure: process.env.NODE_ENV === 'production',
         })
 
         const accessToken = createAccessToken({username: user.username})
@@ -126,6 +127,7 @@ exports.login = async (req, res) => {
 
 exports.getAccessToken = async (req, res) => {
     try {
+        console.log(req.cookies)
         const refreshToken = req.cookies.refreshToken
         if(!refreshToken) return res.status(400).send({
             message: "Please login now"
