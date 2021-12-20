@@ -23,6 +23,7 @@ module.exports = (app) => {
     //Find all
     router.get("/admin", auth, authAdmin, problemController.findAllByAdmin)
     router.get("/teacher", auth, authTeacher, problemController.findAllByTeacher)
+    router.get("/user", problemController.findAllByUser)
 
     //Create
     router.post("/", auth, upload.single('testDataURL'), authTeacher, problemController.createProblem)
@@ -30,6 +31,7 @@ module.exports = (app) => {
     //Find one
     router.get("/admin/:id", auth, authAdmin, problemController.findOneByAdmin)
     router.get("/teacher/:id", auth, authTeacher, problemController.findOneByTeacher)
+    router.get("/user/:id", problemController.findOneByUser)
 
     //Update one
     router.patch("/admin/:id", auth, authAdmin, upload.single('testDataURL'),problemController.updateOneByAdmin)

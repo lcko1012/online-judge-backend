@@ -11,7 +11,7 @@ module.exports = (sequelize, Sequelize) => {
         },
         timeLimit: {
             type: Sequelize.INTEGER,
-            //ms
+            //s
             defaultValue: 1
         },
         memoryLimit: {
@@ -25,12 +25,6 @@ module.exports = (sequelize, Sequelize) => {
         visibleMode: {
             type: Sequelize.STRING,
             defaultValue: 'public'
-        },
-        totalAttempt: {
-            type: Sequelize.INTEGER
-        },
-        correctAttempt: {
-            type: Sequelize.INTEGER
         },
         difficulty: {
             type: Sequelize.STRING
@@ -50,6 +44,10 @@ module.exports = (sequelize, Sequelize) => {
         Problem.belongsToMany(db.problemTag, {
             through: "problemTag_problem",
             foreignKey: "problemId",
+        }),
+
+        Problem.hasMany(db.submission, {
+            foreignKey: "problemId"
         })
     }
 

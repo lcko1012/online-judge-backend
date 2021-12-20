@@ -40,6 +40,7 @@ require("./routes/post.routes")(app)
 require("./routes/group.routes")(app)
 require("./routes/problem.routes")(app)
 require("./routes/problemTag.routes")(app)
+require("./routes/submission.routes")(app)
 
 // Define server configuration
 // app.use(express.static(path.join(__dirname, "/online-judge-frontend/build")))

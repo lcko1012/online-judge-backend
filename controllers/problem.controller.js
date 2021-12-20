@@ -1,10 +1,12 @@
 const db = require("../models")
 const Problem = db.problem
 const User = db.user
+const Submission = db.submission
 const ProblemTag = db.problemTag
 const Op = db.Sequelize.Op
 const JSZip = require("jszip")
 const fs = require("fs")
+
 
 const zipPath = "http://localhost:8080/zip_files/"
 
@@ -30,6 +32,7 @@ const validateZipFile = (req, res) => {
         const jsZip = new JSZip()
         return new Promise((resolve, reject) => {
             fs.readFile(zipFile.path, function (err, data) {
+                console.log(data)
                 if (err) removeTmp(zipFile.path)
                 jsZip.loadAsync(data)
                     .then((zip) => {
@@ -39,11 +42,14 @@ const validateZipFile = (req, res) => {
                         zip.forEach((relPath, file) => {
                             if (!foundIn && relPath.endsWith('.in')) {
                                 foundIn += 1
-                            }
-                            if (!foundOut && relPath.endsWith('.out')) {
-                                foundOut += 1
+                                zip.forEach((relPathOut) => {
+                                    if (relPathOut.endsWith('.out') && relPathOut.startsWith(relPath.substring(0, relPath.length - 3))) {
+                                        foundOut += 1
+                                    }
+                                })
                             }
                         })
+
                         if (foundIn === 0 || foundOut === 0) {
                             reject(new Error("No input file or output file found in ZIP archive."))
 
@@ -60,7 +66,6 @@ const validateZipFile = (req, res) => {
             })
 
         })
-
     }
     catch (error) {
         return res.status(500).send({ message: err.message })
@@ -92,9 +97,7 @@ exports.findAllByAdmin = async (req, res) => {
             where: {
                 [Op.and]: [
                     titleCondition,
-                    {
-                        delFlag: false
-                    }
+                    { delFlag: false }
                 ]
             },
         })
@@ -116,11 +119,12 @@ exports.findAllByTeacher = async (req, res) => {
                 [Op.and]: [
                     titleCondition,
                     {
-                        delFlag: false
+                        [Op.or]: [
+                            { visibleMode: "public" },
+                            { author: req.user.username }
+                        ]
                     },
-                    {
-                        visibleMode: "public"
-                    }
+                    { delFlag: false }
                 ]
             },
         })
@@ -129,6 +133,149 @@ exports.findAllByTeacher = async (req, res) => {
         return res.status(500).send({ message: err.message })
     }
 }
+
+exports.findAllByUser = async (req, res) => {
+    try {
+        const { searchContent, searchAuthor, searchDifficulty } = req.query
+        var contentCondition = searchContent ? { statement: { [Op.iLike]: `%${searchContent}%` } } : null
+        var titleCondition = searchContent ? { title: { [Op.iLike]: `%${searchContent}%` } } : null
+        var authorCondition = searchAuthor ? { author: { [Op.iLike]: `%${searchAuthor}%` } } : null
+        var difficultyCondition = searchDifficulty ? { difficulty: { [Op.iLike]: `%${searchDifficulty}%` } } : null
+
+        if(searchContent) {
+            const problems = await Problem.findAll({
+                where: {
+                    [Op.and]: [
+                        { delFlag: false },
+                        { visibleMode: "public" },
+                        authorCondition,
+                        difficultyCondition
+                    ],
+                    [Op.or]: [
+                        contentCondition,
+                        titleCondition,
+                    ]
+                },
+                group: ['problem.id'],
+                includeIgnoreAttributes: false,
+                attributes: [
+                    "id",
+                    "title",
+                    "author",
+                    "difficulty",
+                    "createdAt",
+                    [db.Sequelize.fn('COUNT', db.Sequelize.col("submissions.id")), "tries"]
+                ],
+                include: [
+                    {
+                        model: Submission,
+                        atributes: [
+                            ['id']
+                        ]
+                    }
+                ],
+                
+            }).catch(err => console.log(err))
+            
+            const item = await Problem.findAll({
+                attributes: [
+                    "id",
+                    [db.Sequelize.fn('COUNT', db.Sequelize.col("submissions.id")), "correctCount"]
+                ],
+                group: ['problem.id'],
+                includeIgnoreAttributes: false,
+                include: [
+                    {
+                        model: Submission,
+                        attributes: ['id'],
+                        where: {
+                            delFlag: false,
+                            verdict: 'Correct'
+                        }
+                    }
+                ],
+
+            }).catch(err => console.log(err))
+
+            for(i = 0; i < problems.length; i++) {
+                problems[i].dataValues.correctCount = 0
+                for(j = 0; j < item.length; j++) {
+                    if(problems[i].dataValues.id == item[j].dataValues.id) {
+                        problems[i].dataValues.correctCount = item[j].dataValues.correctCount
+                    }
+                }
+            }
+
+            res.send(problems)
+        }
+        else {
+            const problems = await Problem.findAll({
+                where: {
+                    [Op.and]: [
+                        { delFlag: false },
+                        { visibleMode: "public" },
+                        authorCondition,
+                        difficultyCondition
+                    ]
+                },
+                group: ['problem.id'],
+                includeIgnoreAttributes: false,
+                attributes: [
+                    "id",
+                    "title",
+                    "author",
+                    "difficulty",
+                    "createdAt",
+                    [db.Sequelize.fn('COUNT', db.Sequelize.col("submissions.id")), "tries"]
+                ],
+                include: [
+                    {
+                        model: Submission,
+                        atributes: [
+                            ['id']
+                        ]
+                    }
+                ],
+                
+            })
+
+            const item = await Problem.findAll({
+                attributes: [
+                    "id",
+                    [db.Sequelize.fn('COUNT', db.Sequelize.col("submissions.id")), "correctCount"]
+                ],
+                group: ['problem.id'],
+                includeIgnoreAttributes: false,
+                include: [
+                    {
+                        model: Submission,
+                        attributes: ['id'],
+                        where: {
+                            delFlag: false,
+                            verdict: 'Correct'
+                        }
+                    }
+                ],
+
+            }).catch(err => console.log(err))
+
+            for(i = 0; i < problems.length; i++) {
+                problems[i].dataValues.correctCount = 0
+                for(j = 0; j < item.length; j++) {
+                    if(problems[i].dataValues.id == item[j].dataValues.id) {
+                        problems[i].dataValues.correctCount = item[j].dataValues.correctCount
+                    }
+                }
+            }
+
+            
+            res.send(problems)
+        }
+    } catch (error) {
+        return res.status(500).send({ message: err.message })
+    }
+}
+
 
 exports.createProblem = async (req, res) => {
     try {
@@ -141,12 +288,12 @@ exports.createProblem = async (req, res) => {
                     title: req.body.title,
                     statement: req.body.statement,
                     timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                     visibleMode: req.body.visibleMode,
                     difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
                     testDataURL: zipPath + req.file.path,
                 })
-                
+
                 const problemTags = JSON.parse(req.body.problemTags)
 
                 if (problemTags) {
@@ -169,7 +316,7 @@ exports.createProblem = async (req, res) => {
                 title: req.body.title,
                 statement: req.body.statement,
                 timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                 visibleMode: req.body.visibleMode,
                 difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
             })
@@ -205,7 +352,7 @@ exports.findOneByAdmin = async (req, res) => {
                     }
                 }]
             })
-        
+
         if (!problem) return res.status(404).send({ message: "Problem not found" })
         res.send(problem)
     } catch (error) {
@@ -240,6 +387,32 @@ exports.findOneByTeacher = async (req, res) => {
     }
 }
 
+exports.findOneByUser = async (req, res) => {
+    try {
+        const problem = await Problem.findOne(
+            {
+                where: {
+                    id: req.params.id,
+                    delFlag: false,
+                    visibleMode: "public"
+                },
+                include: [{
+                    model: ProblemTag,
+                    through: {
+                        attributes: []
+                    }
+                }]
+            })
+
+        if (!problem) return res.status(404).send({ message: "Problem not found" })
+
+        res.send(problem)
+    } catch (error) {
+        return res.status(500).send({ message: err.message })
+    }
+}
+
+
 
 exports.updateOneByAdmin = async (req, res) => {
     try {
@@ -247,7 +420,7 @@ exports.updateOneByAdmin = async (req, res) => {
         const problem = await Problem.findByPk(req.params.id)
         if (!problem) return res.status(404).send({ message: "Problem not found" })
 
-        if(req.file) {
+        if (req.file) {
             validateZipFile(req, res).then(async () => {
                 const existedTagsInProblem = await ProblemTag.findAll({
                     where: {
@@ -261,20 +434,20 @@ exports.updateOneByAdmin = async (req, res) => {
                         }
                     }]
                 })
-    
+
                 if (existedTagsInProblem.length > 0) {
                     existedTagsInProblem.forEach(async (tag) => {
                         await tag.removeProblem(req.params.id).catch(err => { console.log(err) })
                     })
                 }
-    
+
                 const testDataURL = req.file ? zipPath + req.file.path : req.body.testDataURL === "null" ? null : req.body.testDataURL
                 console.log(req.body.statement)
                 await Problem.update({
                     title: req.body.title,
                     statement: req.body.statement,
                     timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                     visibleMode: req.body.visibleMode,
                     difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
                     testDataURL: testDataURL
@@ -284,7 +457,7 @@ exports.updateOneByAdmin = async (req, res) => {
                             id: req.params.id,
                         }
                     })
-    
+
                 const problemTags = JSON.parse(req.body.problemTags)
                 if (problemTags) {
                     problemTags.forEach(async (tag) => {
@@ -294,7 +467,7 @@ exports.updateOneByAdmin = async (req, res) => {
                         }
                     })
                 }
-    
+
                 res.send({ message: "Update success" })
             }).catch(err => {
                 removeTmp(req.file.path)
@@ -328,7 +501,7 @@ exports.updateOneByAdmin = async (req, res) => {
                 title: req.body.title,
                 statement: req.body.statement,
                 timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                 visibleMode: req.body.visibleMode,
                 difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
                 testDataURL: testDataURL
@@ -351,7 +524,7 @@ exports.updateOneByAdmin = async (req, res) => {
 
             res.send({ message: "Update success" })
         }
-       
+
     } catch (error) {
         return res.status(500).send({ message: error.message })
     }
@@ -371,7 +544,7 @@ exports.updateOneByTeacher = async (req, res) => {
 
         if (problem.author !== req.user.username) return res.status(404).send({ message: "Do not permission" })
 
-        if(req.file) {
+        if (req.file) {
             validateZipFile(req, res).then(async () => {
                 const existedTagsInProblem = await ProblemTag.findAll({
                     where: {
@@ -385,20 +558,20 @@ exports.updateOneByTeacher = async (req, res) => {
                         }
                     }]
                 })
-    
+
                 if (existedTagsInProblem.length > 0) {
                     existedTagsInProblem.forEach(async (tag) => {
                         await tag.removeProblem(req.params.id).catch(err => { console.log(err) })
                     })
                 }
-    
+
                 const testDataURL = req.file ? zipPath + req.file.path : req.body.testDataURL === "null" ? null : req.body.testDataURL
-    
+
                 await Problem.update({
                     title: req.body.title,
                     statement: req.body.statement,
                     timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                    memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                     visibleMode: req.body.visibleMode,
                     difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
                     testDataURL: testDataURL
@@ -408,7 +581,7 @@ exports.updateOneByTeacher = async (req, res) => {
                             id: req.params.id,
                         }
                     })
-    
+
                 const problemTags = JSON.parse(req.body.problemTags)
                 if (problemTags) {
                     problemTags.forEach(async (tag) => {
@@ -418,7 +591,7 @@ exports.updateOneByTeacher = async (req, res) => {
                         }
                     })
                 }
-    
+
                 res.send({ message: "Update success" })
             }).catch(err => {
                 removeTmp(req.file.path)
@@ -451,7 +624,7 @@ exports.updateOneByTeacher = async (req, res) => {
                 title: req.body.title,
                 statement: req.body.statement,
                 timeLimit: req.body.timeLimit === "null" || req.body.timeLimit === '' ? 1 : req.body.timeLimit,
-                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === ''  ? null : parseInt(req.body.memoryLimit),
+                memoryLimit: req.body.memoryLimit === "null" || req.body.memoryLimit === '' ? null : parseInt(req.body.memoryLimit),
                 visibleMode: req.body.visibleMode,
                 difficulty: req.body.difficulty === "null" ? null : req.body.difficulty,
                 testDataURL: testDataURL
@@ -474,7 +647,7 @@ exports.updateOneByTeacher = async (req, res) => {
 
             res.send({ message: "Update success" })
         }
-       
+
     } catch (error) {
         return res.status(500).send({ message: error.message })
     }
@@ -501,7 +674,7 @@ exports.deleteByAdmin = async (req, res) => {
 
 exports.deleteByTeacher = async (req, res) => {
     try {
-        const problem = await Problem.findOne({ 
+        const problem = await Problem.findOne({
             where: {
                 id: req.params.id,
                 delFlag: false,
