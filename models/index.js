@@ -2,24 +2,24 @@ const dbConfig = require("../config/db.config")
 
 const Sequelize = require("sequelize")
 
-// const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-//     host: dbConfig.HOST,
-//     dialect: dbConfig.dialect,
-//     operatorsAliases: false,
+const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
+    host: dbConfig.HOST,
+    dialect: dbConfig.dialect,
+    operatorsAliases: false,
 
-//     pool: {
-//         max: dbConfig.pool.max,
-//         min: dbConfig.pool.min,
-//         acquire: dbConfig.pool.acquire,
-//         idle: dbConfig.pool.idle
-//     }
-// })
+    pool: {
+        max: dbConfig.pool.max,
+        min: dbConfig.pool.min,
+        acquire: dbConfig.pool.acquire,
+        idle: dbConfig.pool.idle
+    }
+})
 
 // Define server connection
-const sequelize = new Sequelize(dbConfig.DB ,{
-    dialect: dbConfig.dialect,
-    dialectOptions: dbConfig.dialectOptions,
-})
+// const sequelize = new Sequelize(dbConfig.DB ,{
+//     dialect: dbConfig.dialect,
+//     dialectOptions: dbConfig.dialectOptions,
+// })
 
 sequelize
   .authenticate()
@@ -41,6 +41,7 @@ db.group_user = require("./group_user.model")(sequelize, Sequelize)
 db.group = require("./group.model")(sequelize, Sequelize)
 db.problem = require("./problem.model")(sequelize, Sequelize)
 db.problemTag = require("./problemTag.model")(sequelize, Sequelize)
+db.submission = require("./submission.model")(sequelize, Sequelize)
 
 Object.keys(db).forEach(key => {
     if('associate' in db[key]) {
