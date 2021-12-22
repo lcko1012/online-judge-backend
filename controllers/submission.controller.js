@@ -26,6 +26,9 @@ const checkLanguage = (id) => {
 exports.submitCode = async (req, res) => {
     try {
         const { id } = req.params
+        if(!req.body.source_code || !req.body.language_id) {
+            return res.status(400).send({ message: "Source Code can not be empty" })
+        } 
         const problem = await Problem.findOne(
             {
                 attributes: ["timeLimit", "memoryLimit", "testDataURL"],
@@ -42,28 +45,35 @@ exports.submitCode = async (req, res) => {
 
         const jsZip = new JSZip()
         fs.readFile(testDataURL, function (err, data) {
+            
             jsZip.loadAsync(data)
-                .then((zip) => {
+                .then( async (zip) => {
                     const testArray = []
+                    const promises = []
                     zip.forEach((relPath, file) => {
                         if (relPath.endsWith('.in')) {
-                            zip.forEach((relPathOut) => {
-                                if (relPathOut.endsWith('.out') && relPathOut.startsWith(relPath.substring(0, relPath.length - 3))) {
+                            zip.forEach( async (relPathOut, fileOut) => {
+                                if (relPathOut.endsWith('.out') && relPathOut.substring(0, relPathOut.lastIndexOf(".")) === relPath.substring(0, relPath.lastIndexOf("."))) {
+                                    const inPromise = file.async('string')
+                                    const outPromise = fileOut.async('string')
+                                    promises.push(inPromise)
+                                    promises.push(outPromise)
                                     testArray.push({
-                                        input: zip.file(relPath).async("string"),
-                                        output: zip.file(relPathOut).async("string")
+                                        fileIn: relPath,
+                                        fileOut: relPathOut,
+                                        input: await inPromise,
+                                        output: await outPromise    
                                     })
                                 }
                             })
                         }
                     })
-                    return Promise.all(testArray);
+                    await Promise.all(promises)
+                    return testArray
                 })
                 .then(async (data) => {
                     const results = []
                     const promises = data.map(async (test) => {
-                        test.input = await test.input.then((dataIn) => { return dataIn })
-                        test.output = await test.output.then((dataOut) => { return dataOut })
                         results.push({
                             input: test.input,
                             output: test.output
@@ -72,7 +82,6 @@ exports.submitCode = async (req, res) => {
                     await Promise.all(promises)
 
                     const submissions = []
-
                     results.map((result) => {
                         submissions.push({
                             language_id: req.body.language_id,
@@ -81,18 +90,18 @@ exports.submitCode = async (req, res) => {
                             expected_output: Buffer.from(result.output).toString('base64'),
                             cpu_time_limit: problem.timeLimit.toString(),
                             memory_limit: (problem.memoryLimit*1024).toString(),
+                            max_queue_size: 1000
                         })
                     })
-
                     // return data is an array of tokens
                     const response = await axios.post("https://ce.judge0.com/submissions/batch?base64_encoded=true&wait=true", {
                         "submissions": submissions
                     })
 
-                    let stringToken = ""
+                    let stringToken = response.data[0].token
                     
                     for(let i = 0; i < response.data.length-1; i++){
-                        stringToken = response.data[i].token.concat(",", response.data[i+1].token)
+                        stringToken = stringToken.concat(",", response.data[i+1].token)
                     }
                     
                     await Submission.create({
@@ -184,34 +193,44 @@ exports.deleteOneByAdmin = async (req, res) => {
 exports.updateVerdict = async (req, res) => {
     try {
         const { id } = req.params
-        
+    
         const submission = await Submission.findOne({
             where: {
                 id: id
             }
         })
-
         const submissionTokenResults = await axios.get(`https://ce.judge0.com/submissions/batch?tokens=${submission.tokens}&base64_encoded=false&fields=token,stdout,status_id,language_id,status,time,memory`)
-        
         let resultVerdict = ""
-        submissionTokenResults.data.submissions.map(async (sub) => {
-            if(sub.status.description === "Accepted") {
+        let isProcessing = false
+        let isCorrect = true
+
+        for(var i=0; i<submissionTokenResults.data.submissions.length; i++) {
+            console.log(submissionTokenResults.data.submissions[i].status.description)
+            if(submissionTokenResults.data.submissions[i].status.description === "Processing" || submissionTokenResults.data.submissions[i].status.description === "In Queue") {
+                isProcessing = true
+            }
+            if(submissionTokenResults.data.submissions[i].status.description === "Accepted" && isCorrect) {
                 resultVerdict = "Correct"
             }
-            else if(sub.status.description === "Wrong Answer") {
+            else if(submissionTokenResults.data.submissions[i].status.description === "Wrong Answer") {
                 resultVerdict = "Wrong"
+                isCorrect = false
             }
-            else {
-                resultVerdict = sub.status.description
+            else if (submissionTokenResults.data.submissions[i].status.description !== "Accepted"){
+                resultVerdict = submissionTokenResults.data.submissions[i].status.description
+                isCorrect = false
             }
-        })
+        }
         
-        await submissionService.updateVerdictAndOutput(id, resultVerdict, submissionTokenResults.data.submissions)
-
-        const submissionList = await submissionService.findAll()
+        if(isProcessing === false) {
+            await submissionService.updateVerdictAndOutput(id, resultVerdict, submissionTokenResults.data.submissions)
+        }
+        
+        const submissionList = await submissionService.findAllByUser()
         res.send(submissionList)
 
     } catch (error) {
+        console.log(error)
         return res.status(500).send({ message: err.message })
     }
 }

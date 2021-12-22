@@ -32,7 +32,6 @@ const validateZipFile = (req, res) => {
         const jsZip = new JSZip()
         return new Promise((resolve, reject) => {
             fs.readFile(zipFile.path, function (err, data) {
-                console.log(data)
                 if (err) removeTmp(zipFile.path)
                 jsZip.loadAsync(data)
                     .then((zip) => {
@@ -43,7 +42,7 @@ const validateZipFile = (req, res) => {
                             if (!foundIn && relPath.endsWith('.in')) {
                                 foundIn += 1
                                 zip.forEach((relPathOut) => {
-                                    if (relPathOut.endsWith('.out') && relPathOut.startsWith(relPath.substring(0, relPath.length - 3))) {
+                                    if (relPathOut.endsWith('.out') && relPathOut.substring(0, relPathOut.lastIndexOf(".")) === relPath.substring(0, relPath.lastIndexOf("."))) {
                                         foundOut += 1
                                     }
                                 })

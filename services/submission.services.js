@@ -22,8 +22,11 @@ const SubmissionService = {
                             languageCondition,
                             authorCondition
                         ],
-                        delFlag: false
+                        delFlag: false,
                     },
+                    order: [
+                        ['createdAt', 'DESC']
+                    ],
                     include: [
                         {
                             model: Problem,
@@ -55,8 +58,11 @@ const SubmissionService = {
                             languageCondition,
                             authorCondition
                         ],
-                        delFlag: false
+                        delFlag: false,
                     },
+                    order: [
+                        ['createdAt', 'DESC']
+                    ],
                     include: [
                         {
                             model: Problem,
@@ -97,8 +103,11 @@ const SubmissionService = {
                             problemIdCondition,
                             authorCondition
                         ],
-                        delFlag: false
+                        delFlag: false,
                     },
+                    order: [
+                        ['createdAt', 'DESC']
+                    ],
                     include: [
                         {
                             model: Problem,
@@ -116,8 +125,11 @@ const SubmissionService = {
                 {
                     attributes: ["id", "verdict", "language", "author", "createdAt", "problemId"],
                     where: {
-                        delFlag: false
+                        delFlag: false,
                     },
+                    order: [
+                        ['createdAt', 'DESC']
+                    ],
                     include: [
                         {
                             model: Problem,
@@ -133,21 +145,7 @@ const SubmissionService = {
     },
 
     updateVerdictAndOutput: async (id, newVerdict, newOutput) => {
-
-        if (newVerdict === "Correct") {
-            return await Submission.update(
-                {
-                    verdict: newVerdict,
-                    output: newOutput
-                },
-                {
-                    where: {
-                        id: id
-                    }
-                }
-            )
-        }
-        else return await Submission.update(
+        return await Submission.update(
             {
                 verdict: newVerdict,
                 output: newOutput
@@ -156,9 +154,9 @@ const SubmissionService = {
                 where: {
                     id: id
                 }
-            }
-        )
+            })
     },
+
     findOneByUser: async (id) => {
         return await Submission.findByPk(id, {
             attributes: ["id", "verdict", "language", "author", "createdAt", "problemId", "source", "output"],
