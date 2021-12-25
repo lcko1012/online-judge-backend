@@ -2,6 +2,7 @@ const db = require("../models")
 const User = db.user
 const Op = db.Sequelize.Op
 const bcrypt = require('bcrypt')
+const userService = require("../services/user.services")
 
 exports.getCurrentUser = async (req, res) => {
     try {
@@ -119,3 +120,16 @@ exports.updateAvatar = async (req, res) => {
         return res.status(500).send({ message: err.message })
     }
 }
+
+
+exports.findAllUsers = async (req, res) => {
+    try {
+        const {searchUsername, searchRole} = req.query
+        const users = await userService.findAllUsers(searchUsername, searchRole)
+        res.send(users)   
+    } catch (error) {
+        return res.status(500).send({ message: err.message })
+    }
+}
+
+
